@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  laravel:
+    build:
+      context: ./simple-inventory-management-api
+      dockerfile: Dockerfile
+    image: laravel-app
+    container_name: laravel
+    restart: unless-stopped
+    volumes:
+      - ./simple-inventory-management-api:/var/www
+    working_dir: /var/www
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: simple_inventory
+      DB_USERNAME: root
+      DB_PASSWORD: ""
+    depends_on:
+      - mysql
+    command: >
+      sh -c "php artisan migrate --force &&
+             php artisan serve --host=0.0.0.0 --port=8000"
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: simple_inventory
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3308:3306"
+
+  react:
+    build:
+      context: ./simple-inventory-management-frontend
+      dockerfile: Dockerfile
+    image: react-app
+    container_name: react
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./simple-inventory-management-frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    command: npm start
+
+volumes:
+  mysql_data:
